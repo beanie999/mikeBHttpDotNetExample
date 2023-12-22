@@ -8,6 +8,7 @@ namespace NewRelic.Function;
 public class MikeBDotNetHttpTrigger
 {
     private readonly ILogger _logger;
+    private const string userParam = "user";
 
     public MikeBDotNetHttpTrigger(ILoggerFactory loggerFactory)
     {
@@ -66,6 +67,15 @@ public class MikeBDotNetHttpTrigger
         foreach (var header in req.Headers)
         {
             _logger.LogInformation(String.Format("Header {0}={1}", header.Key, String.Join(",", header.Value)));
+        }
+
+        // Check if we were past a user parameter.
+        if (req.Query.GetValues(userParam) != null && !String.IsNullOrEmpty(req.Query.GetValues(userParam).First()))
+        {
+            string user = req.Query.GetValues(userParam).First();
+            _logger.LogInformation($"User is: {user}");
+            // Set the userId in New Relic for Errors Inbox.
+            transaction.SetUserId(user);
         }
 
         // Random error and wait time.
